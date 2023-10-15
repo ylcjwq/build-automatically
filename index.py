@@ -41,21 +41,24 @@ def construct_vue3():
             if res.returncode == 0:
                 print("依赖安装成功")
                 os.chdir(createPath)
-                vueRouter = "npm install vue-router@next"
-                rs = subprocess.run(vueRouter, shell=True, check=True)
+                vueItem = "npm install vue-router@next pinia axios"
+                rs = subprocess.run(vueItem, shell=True, check=True)
                 print("开始安装路由")
                 if rs.returncode == 0:
                     print("路由安装成功")
                     print("开始生成路由文件")
                     router()
+                    print("路由文件生成成功")
                     print("开始生成仓库文件")
-                    print("开始修改配置文件")
+                    store()
+                    print("仓库文件生成成功")
+                    print("开始修改main文件")
                     revise()
+                    print("main文件生成成功")
                 else:
                     print("路由安装失败！")
             else:
                 print("依赖安装失败！")
-
         else:
             print("项目构建失败")
     except subprocess.CalledProcessError as e:
@@ -180,16 +183,35 @@ def router():
         { path: '/about', name: 'About', component: () => import('@/views/About.vue') },
         ]
 
-        // RouterOptions是路由选项类型
         const options: RouterOptions = {
         history: createWebHashHistory(),
         routes,
         }
 
-        // Router是路由对象类型
         const router: Router = createRouter(options)
 
         export default router
+        """
+        file.write(content)
+    os.chdir("..")
+
+
+# 生成store文件夹
+def store():
+    store_path = os.path.join(os.getcwd(), "src", "store")
+    print(store_path)
+    os.makedirs(store_path, exist_ok=True)
+    os.chdir(store_path)
+    file_path = os.path.join(os.getcwd(), "index.ts")
+    with open(file_path, "a") as file:
+        content = """
+        import { defineStore } from "pinia"
+        import { ref } from "vue"
+
+        export const useIndexStore = defineStore("index", () => {
+            const content = ref<number>(1)
+            return { content }
+        })
         """
         file.write(content)
     os.chdir("..")
@@ -208,21 +230,16 @@ def revise():
         new_content = """
         import { createApp } from 'vue'
         import router from '@/router' 
+        import { createPinia } from 'pinia'
         import App from './App.vue'
 
+        const pinia = createPinia()
         const app = createApp(App)
-        app.use(router)
-        app.mount('#app')
+        app.use(router).use(pinia).mount('#app')
         """
         with open(file_path, 'w') as file:
             file.write(new_content)
 
-        print('修改后的内容：', new_content)
-
-        # 重新读取文件内容，验证修改是否成功
-        with open(file_path, 'r') as file:
-            modified_content = file.read()
-            print('最终内容：', modified_content)
     except FileNotFoundError:
         print('文件未找到')
 
