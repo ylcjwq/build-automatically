@@ -226,7 +226,7 @@ def revise():
             content = file.read()
             print('原始内容：', content)
 
-            # 修改文件内容为引入vue-router后的内容
+        # 修改文件内容为引入vue-router后的内容
         new_content = """
         import { createApp } from 'vue'
         import router from '@/router' 
@@ -245,6 +245,15 @@ def revise():
 
     except Exception as e:
         print('出现错误：', e)
+
+
+# 修改配置文件
+def ts_json():
+    os.chdir("..")
+    file_path = os.path.join(os.getcwd(), "vite.config.ts")
+    with open(file_path, 'r') as file:
+        content = file.read()
+        print('原始内容：', content)
 
 
 print("请选择需要启动的脚本：")
