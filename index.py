@@ -1,5 +1,6 @@
 import subprocess
 import os
+import json
 
 
 # 构建vue3项目
@@ -41,20 +42,19 @@ def construct_vue3():
             if res.returncode == 0:
                 print("依赖安装成功")
                 os.chdir(createPath)
-                vueItem = "npm install vue-router@next pinia axios"
+                vueItem = "npm install vue-router@next pinia axios @types/node"
                 rs = subprocess.run(vueItem, shell=True, check=True)
                 print("开始安装路由")
                 if rs.returncode == 0:
                     print("路由安装成功")
                     print("开始生成路由文件")
                     router()
-                    print("路由文件生成成功")
                     print("开始生成仓库文件")
                     store()
-                    print("仓库文件生成成功")
                     print("开始修改main文件")
                     revise()
-                    print("main文件生成成功")
+                    print("开始修改配置文件")
+                    ts_json()
                 else:
                     print("路由安装失败！")
             else:
@@ -176,21 +176,21 @@ def router():
     file_path = os.path.join(os.getcwd(), "index.ts")
     with open(file_path, "a") as file:
         content = """
-        import { createRouter, createWebHashHistory, RouterOptions, Router, RouteRecordRaw } from 'vue-router'
+import { createRouter, createWebHashHistory, RouterOptions, Router, RouteRecordRaw } from 'vue-router'
 
-        const routes: RouteRecordRaw[] = [
-        { path: '/', name: 'Home', component: () => import('@/views/Home.vue') },
-        { path: '/about', name: 'About', component: () => import('@/views/About.vue') },
-        ]
+const routes: RouteRecordRaw[] = [
+{ path: '/', name: 'Home', component: () => import('@/views/Home.vue') },
+{ path: '/about', name: 'About', component: () => import('@/views/About.vue') },
+]
 
-        const options: RouterOptions = {
-        history: createWebHashHistory(),
-        routes,
-        }
+const options: RouterOptions = {
+history: createWebHashHistory(),
+routes,
+}
 
-        const router: Router = createRouter(options)
+const router: Router = createRouter(options)
 
-        export default router
+export default router
         """
         file.write(content)
     os.chdir("..")
@@ -198,20 +198,20 @@ def router():
 
 # 生成store文件夹
 def store():
-    store_path = os.path.join(os.getcwd(), "src", "store")
+    store_path = os.path.join(os.getcwd(), "store")
     print(store_path)
     os.makedirs(store_path, exist_ok=True)
     os.chdir(store_path)
     file_path = os.path.join(os.getcwd(), "index.ts")
     with open(file_path, "a") as file:
         content = """
-        import { defineStore } from "pinia"
-        import { ref } from "vue"
+import { defineStore } from "pinia"
+import { ref } from "vue"
 
-        export const useIndexStore = defineStore("index", () => {
-            const content = ref<number>(1)
-            return { content }
-        })
+export const useIndexStore = defineStore("index", () => {
+    const content = ref<number>(1)
+    return { content }
+})
         """
         file.write(content)
     os.chdir("..")
@@ -221,6 +221,7 @@ def store():
 def revise():
     try:
         file_path = os.path.join(os.getcwd(), "main.ts")
+        print(file_path)
         # 读取文件内容并修改
         with open(file_path, 'r') as file:
             content = file.read()
@@ -228,14 +229,14 @@ def revise():
 
         # 修改文件内容为引入vue-router后的内容
         new_content = """
-        import { createApp } from 'vue'
-        import router from '@/router' 
-        import { createPinia } from 'pinia'
-        import App from './App.vue'
+import { createApp } from 'vue'
+import router from '../src/router' 
+import { createPinia } from 'pinia'
+import App from './App.vue'
 
-        const pinia = createPinia()
-        const app = createApp(App)
-        app.use(router).use(pinia).mount('#app')
+const pinia = createPinia()
+const app = createApp(App)
+app.use(router).use(pinia).mount('#app')
         """
         with open(file_path, 'w') as file:
             file.write(new_content)
@@ -249,11 +250,72 @@ def revise():
 
 # 修改配置文件
 def ts_json():
-    os.chdir("..")
-    file_path = os.path.join(os.getcwd(), "vite.config.ts")
-    with open(file_path, 'r') as file:
-        content = file.read()
-        print('原始内容：', content)
+    try:
+        # 在src下新建vue.d.ts配置文件
+        file_path = os.path.join(os.getcwd(), "vue.d.ts")
+        new_content = """
+declare module "*.vue" {
+  import { defineComponent } from "vue";
+  const Component: ReturnType<typeof defineComponent>;
+  export default Component;
+}
+        """
+        with open(file_path, 'w') as file:
+            file.write(new_content)
+
+        # 修改vite.config.ts的内容
+        os.chdir("..")
+        file_path = os.path.join(os.getcwd(), "vite.config.ts")
+        with open(file_path, 'r') as file:
+            content = file.read()
+            print('原始内容：', content)
+
+        new_content = """
+import { defineConfig } from "vite";
+import vue from "@vitejs/plugin-vue";
+import * as path from "path";
+
+export default defineConfig({
+  plugins: [vue()],
+  build: {
+    emptyOutDir: false,
+  },
+  resolve: {
+    dedupe: ["vue"],
+    alias: {
+      "@": path.join(__dirname, "src"),
+    },
+  },
+  server: {
+    proxy: {
+      "/api": {
+        target: "http://localhost:3300",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ""),
+      },
+    },
+  },
+})
+        """
+
+        with open(file_path, 'w') as file:
+            file.write(new_content)
+
+        # 修改package.json文件
+        file_path = os.path.join(os.getcwd(), "package.json")
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+
+        data['scripts']['dev'] = 'vite --open'
+
+        with open('package.json', 'w') as file:
+            json.dump(data, file, indent=2)
+
+    except FileNotFoundError:
+        print('文件未找到')
+
+    except Exception as e:
+        print('出现错误：', e)
 
 
 print("请选择需要启动的脚本：")
