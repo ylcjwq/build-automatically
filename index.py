@@ -174,7 +174,7 @@ def router():
     os.makedirs(router_path, exist_ok=True)
     os.chdir(router_path)
     file_path = os.path.join(os.getcwd(), "index.ts")
-    with open(file_path, "a") as file:
+    with open(file_path, "w") as file:
         content = """
 import { createRouter, createWebHashHistory, RouterOptions, Router, RouteRecordRaw } from 'vue-router'
 
@@ -203,7 +203,7 @@ def store():
     os.makedirs(store_path, exist_ok=True)
     os.chdir(store_path)
     file_path = os.path.join(os.getcwd(), "index.ts")
-    with open(file_path, "a") as file:
+    with open(file_path, "w") as file:
         content = """
 import { defineStore } from "pinia"
 import { ref } from "vue"
@@ -222,12 +222,8 @@ def revise():
     try:
         file_path = os.path.join(os.getcwd(), "main.ts")
         print(file_path)
-        # 读取文件内容并修改
-        with open(file_path, 'r') as file:
-            content = file.read()
-            print('原始内容：', content)
 
-        # 修改文件内容为引入vue-router后的内容
+        # 修改main.ts文件内容
         new_content = """
 import { createApp } from 'vue'
 import router from '../src/router' 
@@ -266,9 +262,6 @@ declare module "*.vue" {
         # 修改vite.config.ts的内容
         os.chdir("..")
         file_path = os.path.join(os.getcwd(), "vite.config.ts")
-        with open(file_path, 'r') as file:
-            content = file.read()
-            print('原始内容：', content)
 
         new_content = """
 import { defineConfig } from "vite";
