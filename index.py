@@ -49,6 +49,8 @@ def construct_vue3():
                     print("路由安装成功")
                     print("开始生成路由文件")
                     router()
+                    print("开始生成路由页面")
+                    views()
                     print("开始生成仓库文件")
                     store()
                     print("开始修改main文件")
@@ -176,23 +178,76 @@ def router():
     file_path = os.path.join(os.getcwd(), "index.ts")
     with open(file_path, "w") as file:
         content = """
-import { createRouter, createWebHashHistory, RouterOptions, Router, RouteRecordRaw } from 'vue-router'
+import {
+  createRouter,
+  createWebHashHistory,
+  RouterOptions,
+  Router,
+  RouteRecordRaw,
+} from "vue-router";
 
 const routes: RouteRecordRaw[] = [
-{ path: '/', name: 'Home', component: () => import('@/views/Home.vue') },
-{ path: '/about', name: 'About', component: () => import('@/views/About.vue') },
-]
+  { path: "/", name: "Home", component: () => import("@/views/Home.vue") },
+  {
+    path: "/about",
+    name: "About",
+    component: () => import("@/views/About.vue"),
+  },
+];
 
 const options: RouterOptions = {
-history: createWebHashHistory(),
-routes,
-}
+  history: createWebHashHistory(),
+  routes,
+};
 
-const router: Router = createRouter(options)
+const router: Router = createRouter(options);
 
-export default router
+export default router;
         """
-        file.write(content)
+        file.write(content.lstrip())
+    os.chdir("..")
+
+
+# 生成views文件夹
+def views():
+    views_path = os.path.join(os.getcwd(), "views")
+    print(views_path)
+    os.makedirs(views_path, exist_ok=True)
+    os.chdir(views_path)
+    # 生成Home页面文件
+    file_path = os.path.join(os.getcwd(), "Home.vue")
+    with open(file_path, "w") as file:
+        content = """
+<template>
+  <h1>Home页面</h1>
+</template>
+
+<script setup lang="ts">
+
+</script>
+
+<style scoped>
+
+</style>
+        """
+        file.write(content.lstrip())
+    # 生成About页面文件
+    file_path = os.path.join(os.getcwd(), "About.vue")
+    with open(file_path, "w") as file:
+        content = """
+<template>
+  <h1>About页面</h1>
+</template>
+
+<script setup lang="ts">
+
+</script>
+
+<style scoped>
+
+</style>
+        """
+        file.write(content.lstrip())
     os.chdir("..")
 
 
@@ -213,7 +268,7 @@ export const useIndexStore = defineStore("index", () => {
     return { content }
 })
         """
-        file.write(content)
+        file.write(content.lstrip())
     os.chdir("..")
 
 
@@ -235,7 +290,7 @@ const app = createApp(App)
 app.use(router).use(pinia).mount('#app')
         """
         with open(file_path, 'w') as file:
-            file.write(new_content)
+            file.write(new_content.lstrip())
 
     except FileNotFoundError:
         print('文件未找到')
@@ -257,7 +312,8 @@ declare module "*.vue" {
 }
         """
         with open(file_path, 'w') as file:
-            file.write(new_content)
+            # lstrip 去除首行空行
+            file.write(new_content.lstrip())
 
         # 修改vite.config.ts的内容
         os.chdir("..")
@@ -292,7 +348,7 @@ export default defineConfig({
         """
 
         with open(file_path, 'w') as file:
-            file.write(new_content)
+            file.write(new_content.lstrip())
 
         # 修改package.json文件
         file_path = os.path.join(os.getcwd(), "package.json")
