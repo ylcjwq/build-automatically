@@ -53,8 +53,12 @@ def construct_vue3():
                     views()
                     print("开始生成仓库文件")
                     store()
-                    print("开始修改main文件")
-                    revise()
+                    print("开始修改main.ts文件")
+                    revise_main()
+                    print("开始修改App.vue文件")
+                    revise_app()
+                    print("开始删除多余文件")
+                    delete_vite_file()
                     print("开始修改配置文件")
                     ts_json()
                 else:
@@ -180,7 +184,7 @@ def router():
         content = """
 import {
   createRouter,
-  createWebHashHistory,
+  createWebHistory,
   RouterOptions,
   Router,
   RouteRecordRaw,
@@ -196,7 +200,7 @@ const routes: RouteRecordRaw[] = [
 ];
 
 const options: RouterOptions = {
-  history: createWebHashHistory(),
+  history: createWebHistory(),
   routes,
 };
 
@@ -216,7 +220,7 @@ def views():
     os.chdir(views_path)
     # 生成Home页面文件
     file_path = os.path.join(os.getcwd(), "Home.vue")
-    with open(file_path, "w") as file:
+    with open(file_path, "w", encoding="utf-8") as file:
         content = """
 <template>
   <h1>Home页面</h1>
@@ -233,7 +237,7 @@ def views():
         file.write(content.lstrip())
     # 生成About页面文件
     file_path = os.path.join(os.getcwd(), "About.vue")
-    with open(file_path, "w") as file:
+    with open(file_path, "w", encoding="utf-8") as file:
         content = """
 <template>
   <h1>About页面</h1>
@@ -260,34 +264,34 @@ def store():
     file_path = os.path.join(os.getcwd(), "index.ts")
     with open(file_path, "w") as file:
         content = """
-import { defineStore } from "pinia"
-import { ref } from "vue"
+import { defineStore } from "pinia";
+import { ref } from "vue";
 
 export const useIndexStore = defineStore("index", () => {
-    const content = ref<number>(1)
-    return { content }
-})
+  const content = ref<number>(1);
+  return { content };
+});
         """
         file.write(content.lstrip())
     os.chdir("..")
 
 
 # 修改main.ts文件
-def revise():
+def revise_main():
     try:
         file_path = os.path.join(os.getcwd(), "main.ts")
         print(file_path)
 
         # 修改main.ts文件内容
         new_content = """
-import { createApp } from 'vue'
-import router from '../src/router' 
-import { createPinia } from 'pinia'
-import App from './App.vue'
+import { createApp } from "vue";
+import router from "../src/router";
+import { createPinia } from "pinia";
+import App from "./App.vue";
 
-const pinia = createPinia()
-const app = createApp(App)
-app.use(router).use(pinia).mount('#app')
+const pinia = createPinia();
+const app = createApp(App);
+app.use(router).use(pinia).mount("#app");
         """
         with open(file_path, 'w') as file:
             file.write(new_content.lstrip())
@@ -297,6 +301,46 @@ app.use(router).use(pinia).mount('#app')
 
     except Exception as e:
         print('出现错误：', e)
+
+
+# 修改App.vue文件
+def revise_app():
+    file_path = os.path.join(os.getcwd(), "App.vue")
+    print(file_path)
+
+    # 修改App.vue文件的内容
+    content = """
+<script setup lang="ts">
+import { useRouter } from "vue-router";
+const router = useRouter();
+</script>
+
+<template>
+  <div>
+    <button @click="router.push('/')">去首页</button>
+    <button @click="router.push('/about')">去详情页</button>
+  </div>
+  <router-view></router-view>
+</template>
+
+<style scoped></style>
+    """
+    with open(file_path, 'w', encoding='utf-8') as file:
+        file.write(content.lstrip())
+
+
+# 删除vite生成的多余文件
+def delete_vite_file():
+    # 删除style.css
+    file_path = os.path.join(os.getcwd(), "style.css")
+    os.remove(file_path)
+
+    # 删除HelloWoeld.vue
+    delete_path = os.path.join(os.getcwd(), "components")
+    os.chdir(delete_path)
+    file_path = os.path.join(os.getcwd(), "HelloWorld.vue")
+    os.remove(file_path)
+    os.chdir("..")
 
 
 # 修改配置文件
